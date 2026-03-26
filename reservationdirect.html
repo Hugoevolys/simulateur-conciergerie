@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulateur Revenus — Carte T</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            num: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            primary: '#1E3A5F',
+            accent: '#2563EB',
+            gold: '#D4A017',
+            goldLight: '#F5D060',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+
+    /* Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 9999px;
+      outline: none;
+      cursor: pointer;
+      background: transparent;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 9999px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2563EB;
+      border: 3px solid #fff;
+      box-shadow: 0 1px 6px rgba(37,99,235,0.3);
+      margin-top: -7px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 1px 10px rgba(37,99,235,0.45);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2563EB;
+      border: 3px solid #fff;
+      box-shadow: 0 1px 6px rgba(37,99,235,0.3);
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-track {
+      height: 4px;
+      border-radius: 9999px;
+    }
+
+    .val-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      text-align: right;
+      color: #1E3A5F;
+      font-weight: 600;
+      font-size: 0.875rem;
+      width: 100%;
+      cursor: text;
+      font-family: 'Inter', sans-serif;
+    }
+    .val-input:focus { color: #2563EB; }
+
+    .fade-up { animation: fadeUp 0.45s ease-out both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .d1 { animation-delay: 0.06s; }
+    .d2 { animation-delay: 0.12s; }
+    .d3 { animation-delay: 0.18s; }
+    .d4 { animation-delay: 0.24s; }
+    .d5 { animation-delay: 0.30s; }
+    .d6 { animation-delay: 0.36s; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const fmt = (n) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Math.round(n));
+    const fmtEur = (n) => fmt(n) + ' \u20AC';
+
+    /* ─── Inline Slider ─── */
+    function Slider({ label, value, onChange, min, max, step = 1, suffix = '' }) {
+      const pct = ((value - min) / (max - min)) * 100;
+      const trackBg = `linear-gradient(to right, #BFDBFE ${pct}%, #E5E7EB ${pct}%)`;
+
+      const display = suffix === '%' ? value + ' %'
+        : suffix === 'mois' ? value + ' mois'
+        : suffix === 'biens' ? fmt(value)
+        : suffix === '\u20AC' ? fmt(value) + ' \u20AC'
+        : fmt(value) + (suffix ? ' ' + suffix : '');
+
+      const parse = (raw) => {
+        raw = raw.replace(/[^0-9.,]/g, '').replace(',', '.');
+        let v = parseFloat(raw);
+        if (!isNaN(v)) {
+          v = Math.max(min, Math.min(max, v));
+          v = Math.round(v / step) * step;
+          onChange(v);
+        }
+      };
+
+      return (
+        <div className="flex items-center gap-3 sm:gap-5 py-3 border-b border-gray-100 last:border-0">
+          <span className="text-[13px] text-gray-500 whitespace-nowrap min-w-[160px] sm:min-w-[210px] select-none">{label}</span>
+          <div className="flex-1 px-1">
+            <input type="range" min={min} max={max} step={step} value={value}
+              onChange={(e) => onChange(Number(e.target.value))}
+              style={{ background: trackBg }}
+            />
+          </div>
+          <div className="min-w-[80px] sm:min-w-[100px]">
+            <input type="text" value={display} onChange={(e) => parse(e.target.value)} className="val-input" />
+          </div>
+        </div>
+      );
+    }
+
+    /* ─── Card ─── */
+    function Card({ icon, title, badge, hint, children, className = '' }) {
+      return (
+        <div className={`bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${className}`}>
+          <div className="px-6 sm:px-7 pt-5 pb-2 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-base flex-shrink-0">{icon}</div>
+            <h2 className="text-sm font-semibold text-gray-900 tracking-tight">{title}</h2>
+            {badge && <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-gray-400">{badge}</span>}
+          </div>
+          {hint && <p className="px-6 sm:px-7 pb-2 text-[12px] text-gray-400 leading-relaxed max-w-xl">{hint}</p>}
+          <div className="px-6 sm:px-7 pb-5">
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    /* ─── Result mini-card ─── */
+    function ResultMini({ label, subtitle, value, barColor = 'bg-accent' }) {
+      return (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+          <div className={`w-7 h-1 rounded-full mx-auto mb-2.5 ${barColor}`}></div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{label}</div>
+          <div className="text-xs text-gray-500 min-h-[32px] flex items-center justify-center">{subtitle}</div>
+          <div className="text-xl sm:text-2xl font-bold text-primary font-num mt-2">{fmtEur(value)}</div>
+        </div>
+      );
+    }
+
+    /* ─── Comparison bar ─── */
+    function ComparisonBar({ currentRev, additionalRev }) {
+      const totalRev = currentRev + additionalRev;
+      const currentPct = totalRev > 0 ? (currentRev / totalRev) * 100 : 50;
+      const addPct = totalRev > 0 ? (additionalRev / totalRev) * 100 : 50;
+      const growth = currentRev > 0 ? Math.round((additionalRev / currentRev) * 100) : 0;
+
+      return (
+        <div className="bg-white rounded-2xl border border-amber-200 shadow-sm p-6 sm:p-7">
+          <div className="text-xs font-bold uppercase tracking-widest text-amber-600 mb-4">Comparaison annuelle</div>
+
+          {/* Bar */}
+          <div className="w-full h-10 rounded-xl overflow-hidden flex mb-5" style={{ background: '#F3F4F6' }}>
+            <div className="h-full bg-gray-300 flex items-center justify-center transition-all duration-500 rounded-l-xl"
+              style={{ width: currentPct + '%', minWidth: '60px' }}>
+              <span className="text-[11px] font-bold text-gray-700 px-2 whitespace-nowrap">{fmtEur(currentRev)}</span>
+            </div>
+            <div className="h-full flex items-center justify-center transition-all duration-500 rounded-r-xl"
+              style={{ width: addPct + '%', minWidth: '60px', background: 'linear-gradient(135deg, #D4A017, #F5D060)' }}>
+              <span className="text-[11px] font-bold text-white px-2 whitespace-nowrap">+ {fmtEur(additionalRev)}</span>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm bg-gray-300"></div>
+              <span className="text-xs text-gray-500">Revenus actuels conciergerie</span>
+              <span className="text-sm font-semibold text-gray-700">{fmtEur(currentRev)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm bg-gold"></div>
+              <span className="text-xs text-gray-500">Revenus Carte T</span>
+              <span className="text-sm font-semibold text-gold">{fmtEur(additionalRev)}</span>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+              <span className="text-xs font-bold text-amber-700">+{growth}%</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ═══════════════ PAGE 1 ═══════════════ */
+    function Page1({ state, setState, onNext }) {
+      const caConciergerie = state.nbBiens * state.caMoyen * 12 * state.commissionPct / 100;
+
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-2xl">
+
+            {/* Header */}
+            <div className="text-center mb-10 fade-up">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+                Estimez concr&egrave;tement ce que votre conciergerie peut gagner avec des <span className="text-accent italic">r&eacute;servations en direct</span>
+              </h1>
+            </div>
+
+            {/* Card */}
+            <div className="fade-up d1">
+              <Card
+                icon={<svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>}
+                title="Votre conciergerie"
+              >
+                <Slider label="Nombre de biens en gestion" value={state.nbBiens} onChange={(v) => setState({...state, nbBiens: v})} min={1} max={100} suffix="biens" />
+                <Slider label="CA moyen / bien / mois" value={state.caMoyen} onChange={(v) => setState({...state, caMoyen: v})} min={500} max={5000} step={50} suffix={"\u20AC"} />
+                <Slider label="Commission conciergerie (%)" value={state.commissionPct} onChange={(v) => setState({...state, commissionPct: v})} min={5} max={40} suffix="%" />
+              </Card>
+            </div>
+
+            {/* CA Summary */}
+            <div className="mt-6 fade-up d2 bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-4 flex items-center justify-between">
+              <div className="text-xs text-gray-400 font-medium uppercase tracking-wide">CA annuel conciergerie</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary font-num">{fmtEur(caConciergerie)}</div>
+            </div>
+
+            {/* CTA */}
+            <div className="mt-8 fade-up d3">
+              <button
+                onClick={onNext}
+                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2.5 text-[15px] shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 active:scale-[0.99]"
+              >
+                Voir ma simulation
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ═══════════════ PAGE 2 ═══════════════ */
+    function Page2({ state, setState, onBack }) {
+      const { nbBiens, caMoyen, commissionPct } = state;
+      const caAnnuel = nbBiens * caMoyen * 12;
+      const caConciergerie = caAnnuel * commissionPct / 100;
+
+      // Levier 1 — Réservations en direct
+      const eco1 = caAnnuel * (state.l1Direct / 100) * (state.l1Commission / 100);
+
+      const total = eco1;
+
+      return (
+        <div className="min-h-screen px-4 sm:px-6 py-8 sm:py-14">
+          <div className="max-w-2xl mx-auto">
+
+            {/* Back + Header */}
+            <div className="mb-10 fade-up">
+              <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-accent transition-colors mb-4 group">
+                <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                Modifier mes donn&eacute;es
+              </button>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                Vos revenus additionnels gr&acirc;ce &agrave; la <span className="text-accent">carte&nbsp;T</span>
+              </h1>
+              <p className="text-sm text-gray-400 mt-1.5">{nbBiens} biens &middot; {fmtEur(caMoyen)}/mois &middot; Commission {commissionPct}%</p>
+            </div>
+
+            {/* Levier 1 */}
+            <div className="fade-up d1 mb-8">
+              <Card icon={<span>&#127919;</span>} title="R&eacute;servations en direct" badge="Carte T"
+                hint="En g&eacute;rant vous-m&ecirc;me les r&eacute;servations sans passer par les plateformes, vous &eacute;conomisez les commissions de Airbnb et de Booking.">
+                <Slider label="Part de r&eacute;servations en direct" value={state.l1Direct} onChange={(v) => setState({...state, l1Direct: v})} min={5} max={60} suffix="%" />
+                <Slider label="Commission plateforme &eacute;conomis&eacute;e" value={state.l1Commission} onChange={(v) => setState({...state, l1Commission: v})} min={10} max={25} suffix="%" />
+              </Card>
+            </div>
+
+            {/* ─── Result ─── */}
+            <div className="mb-5 fade-up d2">
+              <ResultMini label="R&eacute;servations en direct" subtitle="Commissions plateforme &eacute;conomis&eacute;es" value={eco1} barColor="bg-amber-400" />
+            </div>
+
+            {/* ─── Grand Total (gold accent) ─── */}
+            <div className="fade-up d3 rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-2 border-amber-300" style={{ background: 'linear-gradient(135deg, #FFFBEB, #FEF3C7)' }}>
+              <div>
+                <div className="text-base font-semibold text-gray-900">Revenus additionnels annuels</div>
+                <div className="text-xs text-amber-700/70 mt-0.5">Gr&acirc;ce &agrave; la Carte T</div>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold font-num text-amber-700">
+                {fmtEur(total)}
+              </div>
+            </div>
+
+            {/* ─── Comparison: Actuel vs Avec Carte T ─── */}
+            <div className="fade-up d4 mb-5">
+              <ComparisonBar currentRev={caConciergerie} additionalRev={total} />
+            </div>
+
+            {/* ─── New Total Revenue ─── */}
+            <div className="fade-up d4 bg-primary rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 shadow-lg shadow-primary/15">
+              <div>
+                <div className="text-base font-semibold text-white">CA total projet&eacute; (avec la carte T)</div>
+                <div className="text-xs text-white/50 mt-0.5">{fmtEur(caConciergerie)} actuels + {fmtEur(total)} additionnels</div>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-white font-num">
+                {fmtEur(caConciergerie + total)}
+              </div>
+            </div>
+
+            {/* ─── Au-delà des revenus ─── */}
+            <div className="fade-up d5 bg-emerald-50 border border-emerald-200 rounded-2xl p-6 sm:p-7 mb-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3 className="text-sm font-bold text-gray-900 mt-1">Au-del&agrave; des revenus : ce que la carte T change pour votre conciergerie</h3>
+              </div>
+              <div className="space-y-4 pl-11">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
+                  <p className="text-[13px] text-gray-600 leading-relaxed"><strong>Captez plus de biens en gestion.</strong> Chaque mandat de recherche vous permet de r&eacute;cup&eacute;rer un nouveau bien &agrave; g&eacute;rer. Vos clients deviennent votre premier canal d'acquisition.</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
+                  <p className="text-[13px] text-gray-600 leading-relaxed"><strong>Offrez un service sup&eacute;rieur &agrave; vos propri&eacute;taires.</strong> Recherche de biens, accompagnement &agrave; l'achat, calcul de rentabilit&eacute;, business plan, home staging, puis gestion locative : une offre cl&eacute; en main que personne d'autre ne propose.</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
+                  <p className="text-[13px] text-gray-600 leading-relaxed"><strong>La confiance est d&eacute;j&agrave; l&agrave;.</strong> Vos propri&eacute;taires vous connaissent et vous font confiance. Pas besoin de prospecter, vous r&eacute;pondez &agrave; une demande qui existe d&eacute;j&agrave; dans votre portefeuille.</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
+                  <p className="text-[13px] text-gray-600 leading-relaxed"><strong>Un &eacute;cosyst&egrave;me complet autour de votre conciergerie.</strong> L'activit&eacute; de transaction n'est pas une activit&eacute; annexe : elle renforce et rentabilise tout votre mod&egrave;le. L'&eacute;cosyst&egrave;me est plus rentable que la gestion en location courte dur&eacute;e &agrave; elle seule.</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
+                  <p className="text-[13px] text-gray-600 leading-relaxed"><strong>Soyez en conformit&eacute; avec la loi Hoguet.</strong> Toute activit&eacute; de transaction immobili&egrave;re est r&eacute;glement&eacute;e. La carte T vous permet d'exercer en toute l&eacute;galit&eacute; et de s&eacute;curiser votre activit&eacute; face aux contr&ocirc;les. C'est aussi un gage de s&eacute;rieux et de cr&eacute;dibilit&eacute; aupr&egrave;s de vos propri&eacute;taires.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── CTA ─── */}
+            <div className="fade-up d6 mb-10">
+              <a href="#" className="block w-full text-center bg-accent hover:bg-blue-700 text-white font-semibold py-4 pb-5 px-6 rounded-xl transition-all shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/25 active:scale-[0.99]">
+                <span className="text-[15px]">Ajouter la carte T &agrave; ma conciergerie &rarr;</span>
+                <span className="block text-[11px] font-normal text-white/60 mt-1">Cliquez ici</span>
+              </a>
+            </div>
+
+            {/* Disclaimer */}
+            <p className="text-center text-[11px] text-gray-400 max-w-xl mx-auto leading-relaxed px-2 mt-8">
+              Simulation indicative &agrave; titre d'illustration. Les r&eacute;sultats r&eacute;els d&eacute;pendent des conditions de march&eacute;, de la zone g&eacute;ographique et de l'activit&eacute; commerciale de chaque conciergerie.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    /* ═══════════════ APP ═══════════════ */
+    function App() {
+      const [page, setPage] = useState(1);
+      const [state, setState] = useState({
+        nbBiens: 20,
+        caMoyen: 1500,
+        commissionPct: 20,
+        l1Direct: 20,
+        l1Commission: 18,
+      });
+
+      if (page === 1) return <Page1 state={state} setState={setState} onNext={() => setPage(2)} />;
+      return <Page2 state={state} setState={setState} onBack={() => setPage(1)} />;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
