@@ -382,7 +382,10 @@
       const caConciergerie = caAnnuel * commissionPct / 100;
 
       // Levier 1 — Réservations en direct
-      const eco1 = caAnnuel * (state.l1Direct / 100) * (state.l1Commission / 100);
+      // Économie totale pour les propriétaires
+      const ecoProprietaires1 = caAnnuel * (state.l1Direct / 100) * (state.l1Commission / 100);
+      // Ce que la conciergerie encaisse = sa commission sur ce montant
+      const eco1 = ecoProprietaires1 * (commissionPct / 100);
 
       // Levier 2 — Mandats de recherche (10% des proprios réinvestissent)
       const nbMandats2 = Math.round(nbBiens * 0.10);
@@ -461,9 +464,22 @@
               </Card>
             </div>
 
+            {/* ─── Synthèse Gains Propriétaires ─── */}
+            <div className="fade-up d5 bg-emerald-50 border border-emerald-200 rounded-2xl p-6 sm:p-7 mb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="text-base font-semibold text-gray-900">CA que vous avez fait gagner &agrave; vos propri&eacute;taires</div>
+                  <div className="text-xs text-emerald-700/70 mt-0.5">Commissions plateformes &eacute;conomis&eacute;es gr&acirc;ce aux r&eacute;servations en direct</div>
+                </div>
+                <div className="text-3xl sm:text-4xl font-extrabold font-num text-emerald-700">
+                  {fmtEur(ecoProprietaires1)}
+                </div>
+              </div>
+            </div>
+
             {/* ─── Results Grid ─── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 fade-up d5">
-              <ResultMini label="Levier 1" subtitle="R&eacute;servations en direct" value={eco1} barColor="bg-amber-400" />
+              <ResultMini label="Levier 1" subtitle={`Votre commission (${commissionPct}%) sur ${fmtEur(ecoProprietaires1)} &eacute;conomis&eacute;s`} value={eco1} barColor="bg-amber-400" />
               <ResultMini label="Levier 2" subtitle="Mandats de recherche" value={total2} barColor="bg-emerald-400" />
               <ResultMini label="Levier 3" subtitle="Bail mobilit&eacute;" value={commission3} barColor="bg-blue-400" />
               <ResultMini label="Levier 4" subtitle="Ventes immobili&egrave;res" value={revVente4} barColor="bg-purple-400" />
