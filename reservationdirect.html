@@ -280,7 +280,10 @@
       const caConciergerie = caAnnuel * commissionPct / 100;
 
       // Levier 1 — Réservations en direct
-      const eco1 = caAnnuel * (state.l1Direct / 100) * (state.l1Commission / 100);
+      // Économie totale pour les propriétaires
+      const ecoProprietaires = caAnnuel * (state.l1Direct / 100) * (state.l1Commission / 100);
+      // Ce que la conciergerie encaisse = sa commission sur ce montant
+      const eco1 = ecoProprietaires * (commissionPct / 100);
 
       const total = eco1;
 
@@ -309,9 +312,10 @@
               </Card>
             </div>
 
-            {/* ─── Result ─── */}
-            <div className="mb-5 fade-up d2">
-              <ResultMini label="R&eacute;servations en direct" subtitle="Commissions plateforme &eacute;conomis&eacute;es" value={eco1} barColor="bg-amber-400" />
+            {/* ─── Results ─── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5 fade-up d2">
+              <ResultMini label="Gains propri&eacute;taires" subtitle="CA que vous avez fait gagner &agrave; vos propri&eacute;taires" value={ecoProprietaires} barColor="bg-emerald-400" />
+              <ResultMini label="Revenus conciergerie" subtitle={`Votre commission (${commissionPct}%) sur ce montant`} value={eco1} barColor="bg-amber-400" />
             </div>
 
             {/* ─── Grand Total (gold accent) ─── */}
