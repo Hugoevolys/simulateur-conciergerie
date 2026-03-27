@@ -387,7 +387,7 @@
       const eco1 = ecoProprietaires1 * (commissionPct / 100);
 
       // Levier 2 — Mandats de recherche
-      const nbMandats2 = Math.round(nbBiens * (state.l2PctReinvest / 100));
+      const nbMandats2 = state.l2NbMandats;
       const commTotale2 = state.l2Prix * (state.l2CommPct / 100);
       const total2 = nbMandats2 * commTotale2 * (state.l2PartConc / 100);
 
@@ -450,11 +450,7 @@
             <div className="fade-up d3 mb-2">
               <Card icon={<span>&#128273;</span>} title="Levier 3 &mdash; Mandats de recherche" badge="Carte T"
                 hint="Parmi vos propri&eacute;taires, nous estimons que sur une ann&eacute;e, un certain pourcentage d'entre eux ou leur r&eacute;seau souhaitent r&eacute;investir dans un nouveau bien en location courte dur&eacute;e.">
-                <Slider label="Propri&eacute;taires qui r&eacute;investissent" value={state.l2PctReinvest} onChange={(v) => setState({...state, l2PctReinvest: v})} min={1} max={30} suffix="%" />
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <span className="text-[13px] text-gray-500">Biens recherch&eacute;s dans l'ann&eacute;e</span>
-                  <span className="text-sm font-semibold text-primary">{nbMandats2}</span>
-                </div>
+                <Slider label="Biens recherch&eacute;s dans l'ann&eacute;e" value={state.l2NbMandats} onChange={(v) => setState({...state, l2NbMandats: v})} min={1} max={15} />
                 <Slider label="Prix moyen du bien" value={state.l2Prix} onChange={(v) => setState({...state, l2Prix: v})} min={50000} max={800000} step={10000} suffix={"\u20AC"} />
                 <Slider label="Commission agence (% prix)" value={state.l2CommPct} onChange={(v) => setState({...state, l2CommPct: v})} min={1} max={10} suffix="%" />
                 <Slider label="Part concierge (% commission)" value={state.l2PartConc} onChange={(v) => setState({...state, l2PartConc: v})} min={10} max={100} step={5} suffix="%" />
@@ -590,7 +586,7 @@
         l1Direct: 20,
         l1Commission: 20,
         // Levier 2 — Mandats de recherche
-        l2PctReinvest: 10,
+        l2NbMandats: 2,
         l2Prix: 200000,
         l2CommPct: 5,
         l2PartConc: 60,

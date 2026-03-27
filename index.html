@@ -389,8 +389,8 @@
       // Ce que la conciergerie encaisse = sa commission sur ce montant
       const eco1 = ecoProprietaires1 * (commissionPct / 100);
 
-      // Levier 2 — Mandats de recherche (10% des proprios réinvestissent)
-      const nbMandats2 = Math.round(nbBiens * 0.10);
+      // Levier 2 — Mandats de recherche
+      const nbMandats2 = state.l2NbMandats;
       const commTotale2 = state.l2Prix * (state.l2CommPct / 100);
       const total2 = nbMandats2 * commTotale2 * (state.l2PartConc / 100);
 
@@ -435,10 +435,7 @@
             <div className="fade-up d2 mb-5">
               <Card icon={<span>&#128273;</span>} title="Levier 2 — Mandats de recherche" badge="Carte T"
                 hint={"Parmi vos propri\u00E9taires, nous estimons que sur une ann\u00E9e, 10% d\u2019entre eux ou leur r\u00E9seau souhaitent r\u00E9investir dans un nouveau bien en location courte dur\u00E9e."}>
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <span className="text-[13px] text-gray-500">Biens recherch&eacute;s dans l'ann&eacute;e (10%)</span>
-                  <span className="text-sm font-semibold text-primary">{nbMandats2}</span>
-                </div>
+                <Slider label="Biens recherch&eacute;s dans l'ann&eacute;e" value={state.l2NbMandats} onChange={(v) => setState({...state, l2NbMandats: v})} min={1} max={15} />
                 <Slider label="Prix moyen du bien" value={state.l2Prix} onChange={(v) => setState({...state, l2Prix: v})} min={50000} max={800000} step={10000} suffix={"\u20AC"} />
                 <Slider label="Commission agence (% prix)" value={state.l2CommPct} onChange={(v) => setState({...state, l2CommPct: v})} min={1} max={10} suffix="%" />
                 <Slider label="Part concierge (% commission)" value={state.l2PartConc} onChange={(v) => setState({...state, l2PartConc: v})} min={10} max={100} step={5} suffix="%" />
@@ -602,6 +599,7 @@
         l1Direct: 20,
         l1Commission: 18,
         // Levier 2 — Mandats de recherche
+        l2NbMandats: 2,
         l2Prix: 200000,
         l2CommPct: 5,
         l2PartConc: 60,
