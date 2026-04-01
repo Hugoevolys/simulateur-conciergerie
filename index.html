@@ -139,16 +139,24 @@
       };
 
       return (
-        <div className="flex items-center gap-3 sm:gap-5 py-3 border-b border-gray-100 last:border-0">
-          <span className="text-[13px] text-gray-500 whitespace-nowrap min-w-[160px] sm:min-w-[210px] select-none">{label}</span>
-          <div className="flex-1 px-1">
-            <input type="range" min={min} max={max} step={step} value={value}
-              onChange={(e) => onChange(Number(e.target.value))}
-              style={{ background: trackBg }}
-            />
+        <div className="py-3 border-b border-gray-100 last:border-0">
+          <div className="flex items-center justify-between mb-2 sm:mb-0">
+            <span className="text-[13px] text-gray-500 select-none">{label}</span>
+            <div className="min-w-[80px] sm:min-w-[100px] sm:hidden">
+              <input type="text" value={display} onChange={(e) => parse(e.target.value)} className="val-input" />
+            </div>
           </div>
-          <div className="min-w-[80px] sm:min-w-[100px]">
-            <input type="text" value={display} onChange={(e) => parse(e.target.value)} className="val-input" />
+          <div className="flex items-center gap-3 sm:gap-5">
+            <div className="hidden sm:block min-w-[210px]"></div>
+            <div className="flex-1 px-1">
+              <input type="range" min={min} max={max} step={step} value={value}
+                onChange={(e) => onChange(Number(e.target.value))}
+                style={{ background: trackBg }}
+              />
+            </div>
+            <div className="hidden sm:block min-w-[100px]">
+              <input type="text" value={display} onChange={(e) => parse(e.target.value)} className="val-input" />
+            </div>
           </div>
         </div>
       );
